@@ -26,10 +26,7 @@ def start(update: Update, context: CallbackContext):
         [InlineKeyboardButton("📞 الدعم الفني", callback_data='support')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text(
-        "مرحبا بك في بوت H للاستثمار 💰\n\nاختر من القائمة:",
-        reply_markup=reply_markup
-    )
+    update.message.reply_text("مرحبا بك في بوت H للاستثمار 💰\n\nاختر من القائمة:", reply_markup=reply_markup)
 
 def button_handler(update: Update, context: CallbackContext):
     query = update.callback_query
@@ -53,6 +50,15 @@ def button_handler(update: Update, context: CallbackContext):
             reply_markup=reply_markup
         )
     
+    elif query.data == 'usdt':
+        keyboard = [[InlineKeyboardButton("🔙 رجوع", callback_data='deposit')]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        query.edit_message_text(
+            "💵 **الإيداع USDT TRC20**\n\n**العنوان:**\n`Txxxxxxxxxxxxxxxxxxxxxxxxxx`\n\n1. حول على شبكة TRC20 فقط\n2. أرسل لقطة شاشة بعد التحويل\n3. اكتب رقم المحفظة اللي حولت منها\n\n⚠️ **الحد الأدنى: 10 USDT**",
+            parse_mode='Markdown',
+            reply_markup=reply_markup
+        )
+    
     elif query.data == 'back':
         keyboard = [
             [InlineKeyboardButton("💰 إيداع", callback_data='deposit')],
@@ -66,11 +72,17 @@ def button_handler(update: Update, context: CallbackContext):
     elif query.data == 'support':
         query.edit_message_text(f"📞 **الدعم الفني**\n\nللاستفسار أو المساعدة تواصل مع:\n{SUPPORT_USERNAME}\n\nمتواجدين 24/7 لخدمتك", parse_mode='Markdown')
     
+    elif query.data == 'account':
+        query.edit_message_text(f"📊 **معلومات حسابك**\n\nالرصيد: 0$\nالأرباح: 0$\nإجمالي الإيداع: 0$\n\nقم بالإيداع لبدء الاستثمار", parse_mode='Markdown')
+    
     else:
         query.edit_message_text("💸 قسم السحب تحت الصيانة حاليا\nراسل الدعم للمساعدة")
 
 def handle_photo(update: Update, context: CallbackContext):
     update.message.reply_text(f"✅ تم استلام إشعار الإيداع بنجاح\n\n⏱️ جاري مراجعة العملية والتفعيل خلال 5-10 دقائق\nلو تأخر راسل الدعم: {SUPPORT_USERNAME}")
+
+def handle_text(update: Update, context: CallbackContext):
+    update.message.reply_text("استخدم الأزرار أو اكتب /start لعرض القائمة")
 
 def run_bot():
     print("Starting Telegram Bot...")
@@ -79,6 +91,7 @@ def run_bot():
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CallbackQueryHandler(button_handler))
     dp.add_handler(MessageHandler(Filters.photo, handle_photo))
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_text))
     print("Bot is now polling... Send /start")
     updater.start_polling()
     updater.idle()
