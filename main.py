@@ -5,7 +5,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # ===== إعداداتك =====
-TOKEN = "8890618751:AAHU8C-jYOrLWlEQskr68oHASlzXIsSDQrQ"
+TOKEN = "حط_التوكن_الصح_هنا"8890618751:AAHU8C-jYOrLWlEQskr68oHASlzXIsSDQrQ"  # ← لازم تحط التوكن تبع البوت اللي بتجرب عليه
 SHAM_CASH_NUMBER = "64f19e094a546aca9b6f918da631b043"
 SUPPORT_USERNAME = "@HHHH22121"
 # ==================
@@ -47,14 +47,12 @@ def run_bot():
     application = Application.builder().token(TOKEN).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button))
-    application.run_polling()
+    application.run_polling(drop_pending_updates=True)
 
 if __name__ == '__main__':
-    # شغل البوت في thread منفصل
     bot_thread = threading.Thread(target=run_bot)
     bot_thread.daemon = True
     bot_thread.start()
-    # شغل Flask
     port = int(os.environ.get('PORT', 10000))
     print(f"Starting Flask on port {port}")
     app.run(host='0.0.0.0', port=port)
