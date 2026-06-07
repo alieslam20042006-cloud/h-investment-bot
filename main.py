@@ -5,7 +5,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # ===== إعداداتك =====
-TOKEN = "8890618751:AAHU8C-jYOrLWlEQskr68oHASlzXIsSDQrQ"
+TOKEN = "8615885529:AAFOLVBQE3BDjKQgq_Tso9GdNx0aYDLl8yw"
 SHAM_CASH_NUMBER = "64f19e094a546aca9b6f918da631b043"
 SUPPORT_USERNAME = "@HHHH22121"
 # ==================
