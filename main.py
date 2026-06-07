@@ -2,13 +2,11 @@ import os
 import threading
 from flask import Flask
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler, CallbackContext
 
-# ===== إعداداتك =====
 TOKEN = "8615885529:AAFOLVBQE3BDjKQgq_Tso9GdNx0aYDLl8yw"
-SHAM_CASH_NUMBER = "64f19e094a546aca9b6f918da631b043"
+SHAM_CASH_ACCOUNT = "64f19e094a546aca9b6f918da631b043"
 SUPPORT_USERNAME = "@HHHH22121"
-# ==================
 
 app = Flask(__name__)
 
@@ -16,43 +14,75 @@ app = Flask(__name__)
 def home():
     return "H Investment Bot is running!"
 
-# ===== أوامر البوت =====
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def run_flask():
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port)
+
+def start(update: Update, context: CallbackContext):
     keyboard = [
         [InlineKeyboardButton("💰 إيداع", callback_data='deposit')],
-        [InlineKeyboardButton("📊 حسابي", callback_data='account')],
         [InlineKeyboardButton("💸 سحب", callback_data='withdraw')],
-        [InlineKeyboardButton("📞 الدعم", callback_data='support')]
+        [InlineKeyboardButton("📊 حسابي", callback_data='account')],
+        [InlineKeyboardButton("📞 الدعم الفني", callback_data='support')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text('مرحباً بك في شركة آتش (H) للإستثمارات!\n\nاختر من القائمة:', reply_markup=reply_markup)
+    update.message.reply_text(
+        "مرحبا بك في بوت H للاستثمار 💰\n\nاختر من القائمة:",
+        reply_markup=reply_markup
+    )
 
-async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def button_handler(update: Update, context: CallbackContext):
     query = update.callback_query
-    await query.answer()
+    query.answer()
     
     if query.data == 'deposit':
-        text = f"طرق الإيداع:\n\n💳 شام كاش:\n`{SHAM_CASH_NUMBER}`\n\nانسخ الرقم وحول عليه، ثم أرسل صورة التحويل للدعم."
-        await query.edit_message_text(text=text, parse_mode='Markdown')
+        keyboard = [
+            [InlineKeyboardButton("شام كاش", callback_data='shamcash')],
+            [InlineKeyboardButton("USDT TRC20", callback_data='usdt')],
+            [InlineKeyboardButton("🔙 رجوع للقائمة", callback_data='back')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        query.edit_message_text("اختر طريقة الإيداع:", reply_markup=reply_markup)
+    
+    elif query.data == 'shamcash':
+        keyboard = [[InlineKeyboardButton("🔙 رجوع", callback_data='deposit')]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        query.edit_message_text(
+            f"📱 **الإيداع عبر شام كاش**\n\n**رقم الحساب:**\n`{SHAM_CASH_ACCOUNT}`\n\n**خطوات الإيداع:**\n1. انسخ رقم الحساب وحول المبلغ\n2. صور إشعار التحويل\n3. أرسل الصورة هنا مع رقم العملية\n\n⚠️ **الحد الأدنى للإيداع: 10$**\n⏱️ التفعيل خلال 5-10 دقائق",
+            parse_mode='Markdown',
+            reply_markup=reply_markup
+        )
+    
+    elif query.data == 'back':
+        keyboard = [
+            [InlineKeyboardButton("💰 إيداع", callback_data='deposit')],
+            [InlineKeyboardButton("💸 سحب", callback_data='withdraw')],
+            [InlineKeyboardButton("📊 حسابي", callback_data='account')],
+            [InlineKeyboardButton("📞 الدعم الفني", callback_data='support')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        query.edit_message_text("مرحبا بك في بوت H للاستثمار 💰\n\nاختر من القائمة:", reply_markup=reply_markup)
+    
     elif query.data == 'support':
-        text = f"للتواصل مع الدعم:\n{SUPPORT_USERNAME}"
-        await query.edit_message_text(text=text)
-    elif query.data == 'account':
-        await query.edit_message_text(text="رصيدك الحالي: 0$\nالأرباح: 0$")
-    elif query.data == 'withdraw':
-        await query.edit_message_text(text="الحد الأدنى للسحب 10$. رصيدك غير كافي حالياً.")
+        query.edit_message_text(f"📞 **الدعم الفني**\n\nللاستفسار أو المساعدة تواصل مع:\n{SUPPORT_USERNAME}\n\nمتواجدين 24/7 لخدمتك", parse_mode='Markdown')
+    
+    else:
+        query.edit_message_text("💸 قسم السحب تحت الصيانة حاليا\nراسل الدعم للمساعدة")
+
+def handle_photo(update: Update, context: CallbackContext):
+    update.message.reply_text(f"✅ تم استلام إشعار الإيداع بنجاح\n\n⏱️ جاري مراجعة العملية والتفعيل خلال 5-10 دقائق\nلو تأخر راسل الدعم: {SUPPORT_USERNAME}")
 
 def run_bot():
     print("Starting Telegram Bot...")
-    application = Application.builder().token(TOKEN).build()
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CallbackQueryHandler(button))
-    application.run_polling(drop_pending_updates=True)
+    updater = Updater(TOKEN, use_context=True)
+    dp = updater.dispatcher
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CallbackQueryHandler(button_handler))
+    dp.add_handler(MessageHandler(Filters.photo, handle_photo))
+    print("Bot is now polling... Send /start")
+    updater.start_polling()
+    updater.idle()
 
 if __name__ == '__main__':
-    bot_thread = threading.Thread(target=run_bot)
-    bot_thread.daemon = True
-    bot_thread.start()
-    port = int(os.environ.get('PORT', 10000))
-    print(f"Starting Flask on port {port}")
-    app.run(host='0.0.0.0', port=port)
+    threading.Thread(target=run_flask).start()
+    run_bot()
